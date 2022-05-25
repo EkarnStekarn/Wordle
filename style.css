@@ -30,14 +30,14 @@ h1 {
   display: flex;
 }
 
-#keyboard-cont {
+#keyboard-content {
   margin: 1rem 0;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-#keyboard-cont div {
+#keyboard-content div {
   display: flex;
 }
 

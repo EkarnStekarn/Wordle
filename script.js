@@ -59,6 +59,7 @@ function insertLetter (pressedKey) {
 
     let row = document.getElementsByClassName("letter-row")[6 - guessesRemaining]
     let box = row.children[nextLetter]
+    animateCSS(box, "pulse")
     box.textContent = pressedKey
     box.classList.add("filled-box")
     currentGuess.push(pressedKey)
@@ -73,6 +74,23 @@ function deleteLetter () {
     currentGuess.pop()
     nextLetter -= 1
 }
+function shadeKeyBoard(letter, color) {
+    for (const elem of document.getElementsByClassName("keyboard-button")) {
+        if (elem.textContent === letter) {
+            let oldColor = elem.style.backgroundColor
+            if (oldColor === 'green') {
+                return
+            } 
+
+            if (oldColor === 'yellow' && color !== 'green') {
+                return
+            }
+
+            elem.style.backgroundColor = color
+            break
+        }
+    }
+}
 
 function checkGuess () {
     let row = document.getElementsByClassName("letter-row")[6 - guessesRemaining]
@@ -84,12 +102,12 @@ function checkGuess () {
     }
 
     if (guessString.length != 5) {
-        alert("Not enough letters!")
+        toastr.error("Not enough letters!")
         return
     }
 
     if (!WORDS.includes(guessString)) {
-        alert("Word not in list!")
+        toastr.error("Word not in list!")
         return
     }
 
@@ -100,34 +118,35 @@ function checkGuess () {
         let letter = currentGuess[i]
         
         let letterPosition = rightGuess.indexOf(currentGuess[i])
-        // is letter in the correct guess
+        // är bokstaven med i rätt ord
         if (letterPosition === -1) {
             letterColor = 'grey'
         } else {
-            // now, letter is definitely in word
-            // if letter index and right guess index are the same
-            // letter is in the right position 
+            // nu är bokstaven defenetivt med i ordet
+            // om letter index och right guess index är de sammma så är bokstaven på rätt plats
             if (currentGuess[i] === rightGuess[i]) {
-                // shade green 
+                // gör bokstavens bakgrund grön  
                 letterColor = 'lime'
             } else {
-                // shade box yellow
+                // gör boktavens bakgrund gul
                 letterColor = 'yellow'
             }
 
             rightGuess[letterPosition] = "#"
         }
-
         let delay = 250 * i
         setTimeout(()=> {
-            //shade box
+            //flippar boxen eller bakgrunden
+            animateCSS(box, 'flipInX')
+            //ger boxen shading
             box.style.backgroundColor = letterColor
             shadeKeyBoard(letter, letterColor)
         }, delay)
+        
     }
 
     if (guessString === rightGuessString) {
-        alert("You guessed right! Game over!")
+        toastr.success("You guessed right! Game over!")
         guessesRemaining = 0
         return
     } else {
@@ -136,8 +155,41 @@ function checkGuess () {
         nextLetter = 0;
 
         if (guessesRemaining === 0) {
-            alert("You've run out of guesses! Game over!")
-            alert(`The right word was: "${rightGuessString}"`)
+            toastr.error("You've run out of guesses! Game over!")
+            toastr.info(`The right word was: "${rightGuessString}"`)
         }
     }
 }
+document.getElementById("keyboard-content").addEventListener("click", (e) => {
+    const target = e.target
+    
+    if (!target.classList.contains("keyboard-button")) {
+        return
+    }
+    let key = target.textContent
+
+    if (key === "Del") {
+        key = "Backspace"
+    } 
+
+    document.dispatchEvent(new KeyboardEvent("keyup", {'key': key}))
+})
+
+const animateCSS = (element, animation, prefix = 'animate__') =>
+  // skapar en promise och returnerar den
+  new Promise((resolve, reject) => {
+    const animationName = `${prefix}${animation}`;
+    const node = element
+    node.style.setProperty('--animate-duration', '0.3s');
+    
+    node.classList.add(`${prefix}animated`, animationName);
+
+    // När animeringen är klar så rensas klasserna och bryter löftet/promise
+    function handleAnimationEnd(event) {
+      event.stopPropagation();
+      node.classList.remove(`${prefix}animated`, animationName);
+      resolve('Animation ended');
+    }
+
+    node.addEventListener('animationend', handleAnimationEnd, {once: true});
+});
